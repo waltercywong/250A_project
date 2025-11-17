@@ -8,14 +8,13 @@
 **Objective:** Understand available data and relationships
 
 **Key files:**
-- `game.csv` - Main game results with team stats
-- `game_summary.csv` - Game metadata (date, attendance, time)
-- `game_info.csv` - Additional game information
-- `line_score.csv` - Quarter-by-quarter scores
-- `team_info_common.csv` - Season-level team statistics
+- `game.csv` - Main game results with team stats (FG%, rebounds, assists, turnovers, scores, win/loss)
+- `game_info.csv` - Game metadata (date, attendance, game time)
 - `inactive_players.csv` - Player availability
 - `officials.csv` - Referee assignments
-- `other_stats.csv` - Advanced game statistics
+- `other_stats.csv` - Advanced game statistics (paint points, fast break points, turnovers)
+- `team.csv` - Team information (city, abbreviation, founding year)
+- `team_history.csv` - Historical team data
 
 **Tasks:**
 ```python
@@ -53,30 +52,31 @@ target = "home_team_wins"  # Binary: 1 = home wins, 0 = away wins
 ```
 
 ### **2.2 Team Performance Features**
-**From `team_info_common.csv` - aggregate by season:**
+**Calculate from `game.csv` - rolling statistics before each game:**
 
-**Current season performance (before game):**
-- Win percentage (rolling)
-- Points per game (offense strength)
-- Opponent points per game (defense strength)
-- Offensive rating
-- Defensive rating
-- Net rating
-- Conference rank
-- Division rank
+**Current season performance (cumulative before game):**
+- Win percentage (rolling, computed from game results)
+- Points per game (offensive strength, averaged from past games)
+- Opponent points per game (defensive strength, averaged from past games)
+- Field goal percentage (FG%, FG3%)
+- Free throw percentage (FT%)
+- Rebounds per game (offensive, defensive, total)
+- Assists per game
+- Turnovers per game
+- Steals and blocks per game
 
 **Recent form (last N games):**
 - Win percentage last 5 games
 - Win percentage last 10 games
-- Scoring trend
+- Scoring trend (points increasing/decreasing)
 - Plus/minus trend
 
-**Advanced metrics:**
-- Pace (possessions per game)
-- True shooting percentage
-- Effective field goal percentage
-- Turnover rate
-- Offensive/defensive rebound percentage
+**Advanced metrics (from `other_stats.csv`):**
+- Points in paint per game
+- Fast break points per game
+- Second chance points per game
+- Points off turnovers
+- Largest lead (momentum indicator)
 
 ### **2.3 Head-to-Head History**
 **From `game.csv`:**
@@ -110,9 +110,10 @@ target = "home_team_wins"  # Binary: 1 = home wins, 0 = away wins
 **Strength differential:**
 ```python
 # Create pairwise comparisons
-offensive_advantage = home_ppg - away_opp_ppg
-defensive_advantage = home_opp_ppg - away_ppg
-pace_differential = home_pace - away_pace
+offensive_advantage = home_ppg - away_ppg
+defensive_advantage = away_opp_ppg - home_opp_ppg
+shooting_advantage = home_fg% - away_fg%
+rebound_differential = home_rpg - away_rpg
 ```
 
 **Momentum features:**
@@ -120,6 +121,7 @@ pace_differential = home_pace - away_pace
 home_streak = consecutive_wins_or_losses
 away_streak = consecutive_wins_or_losses
 form_difference = home_last5_win% - away_last5_win%
+scoring_trend_diff = home_scoring_trend - away_scoring_trend
 ```
 
 ---
@@ -133,13 +135,13 @@ form_difference = home_last5_win% - away_last5_win%
 
 **Parent nodes (causes):**
 
-**Tier 1: Team Quality (season-long attributes)**
-- `home_team_strength` - Discretized (Weak/Average/Strong)
-- `away_team_strength` - Discretized (Weak/Average/Strong)
-- `home_offensive_rating` - Continuous or discretized
-- `home_defensive_rating` - Continuous or discretized
-- `away_offensive_rating` - Continuous or discretized
-- `away_defensive_rating` - Continuous or discretized
+**Tier 1: Team Quality (season-long attributes, computed from game history)**
+- `home_team_strength` - Discretized (Weak/Average/Strong) based on win%
+- `away_team_strength` - Discretized (Weak/Average/Strong) based on win%
+- `home_offensive_strength` - Discretized based on PPG
+- `home_defensive_strength` - Discretized based on opponent PPG
+- `away_offensive_strength` - Discretized based on PPG
+- `away_defensive_strength` - Discretized based on opponent PPG
 
 **Tier 2: Recent Form (short-term state)**
 - `home_recent_form` - Discretized (Poor/Average/Good)
@@ -159,14 +161,14 @@ form_difference = home_last5_win% - away_last5_win%
 **Proposed DAG (Directed Acyclic Graph):**
 
 ```
-                 Team Season Stats
+         Game History (rolling stats from game.csv)
                  /              \
                 /                \
         Home_Strength      Away_Strength
                |                  |
                |                  |
-        Home_Off_Rating    Away_Off_Rating
-        Home_Def_Rating    Away_Def_Rating
+        Home_Off_Strength  Away_Off_Strength
+        Home_Def_Strength  Away_Def_Strength
                |                  |
                v                  v
         Home_Recent_Form   Away_Recent_Form
@@ -272,18 +274,23 @@ labels = ['B2B', '1_day', '2_days', '3+_days']
 
 **Strategies:**
 ```python
-# Missing team stats early in season
-- Use previous season stats
-- Use league average
-- Impute with team history
+# Team stats early in season (insufficient game history)
+- Require minimum 5 games before including in training
+- Use previous season's final stats as prior
+- Use league average for first few games
+- Implement expanding window (use all available data)
 
 # Missing inactive player data
 - Assume full roster if missing
 - Use indicator variable for "data_available"
 
-# Missing officials/attendance
+# Missing officials data
 - Create "unknown" category
-- Impute with season average
+- Could exclude if not predictive
+
+# Missing attendance in game_info.csv
+- Impute with team's season average
+- Use arena capacity as proxy
 ```
 
 ### **4.4 Feature Scaling**

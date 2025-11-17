@@ -22,17 +22,17 @@ Predicting NBA game outcomes is a complex problem involving multiple interacting
 **Primary Dataset:** Basketball Reference NBA Historical Data (Kaggle: `wyattowalsh/basketball`)
 
 **Key Tables:**
-- `game.csv` (~65,000 games, 1946-2023): Game results, team statistics (FG%, rebounds, assists, turnovers), final scores
-- `team_info_common.csv`: Season-level team statistics (win percentage, offensive/defensive ratings, conference rank)
-- `game_summary.csv`: Game metadata (date, attendance, game time)
-- `line_score.csv`: Quarter-by-quarter scores for analyzing game flow
+- `game.csv` (~65,000 games, 1946-2023): Game results, team statistics (FG%, rebounds, assists, turnovers), final scores, win/loss records
+- `game_info.csv`: Game metadata (date, attendance, game time)
 - `inactive_players.csv`: Player availability per game (roster health proxy)
 - `officials.csv`: Referee assignments per game
+- `other_stats.csv`: Advanced game statistics (paint points, fast break points, turnovers)
+- `team.csv` & `team_history.csv`: Team information and historical data
 - `common_player_info.csv` & `player.csv`: Player information for roster analysis
 
 **Data Characteristics:**
 - Time range: 1996-2023 (modern NBA era with consistent statistics)
-- ~30,000 games with complete feature data
+- ~30,000 regular season games with complete feature data
 - Balanced outcome variable (home team wins ~58% historically)
 - Minimal missing data in core statistics; strategic imputation for advanced metrics
 
@@ -42,9 +42,10 @@ Predicting NBA game outcomes is a complex problem involving multiple interacting
 
 **1. Data Preprocessing & Feature Engineering**
 - **Temporal split:** Train (1996-2018), Validation (2019-2021), Test (2022-2023) to avoid data leakage
-- **Rolling statistics:** Calculate cumulative team metrics up to game date (win%, PPG, defensive rating)
-- **Contextual features:** Days of rest (from game dates), back-to-back indicator, home/away status, number of inactive players
-- **Recent form:** Last 5-game and 10-game win percentages
+- **Calculate team statistics from `game.csv`:** Compute rolling/cumulative metrics (win%, PPG, FG%, rebounds, assists) from historical game results for each team before each game
+- **Contextual features:** Days of rest (calculated from `game_info.csv` dates), back-to-back indicator, home/away status, number of inactive players
+- **Recent form:** Last 5-game and 10-game win percentages, scoring trends
+- **Advanced metrics from `other_stats.csv`:** Points in paint, fast break points, second chance points
 - **Discretization:** Bin continuous variables into categories (e.g., team strength: Weak/Average/Strong; rest: 0-days/1-day/2-days/3+)
 
 **2. Bayesian Network Structure Design**
