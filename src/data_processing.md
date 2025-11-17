@@ -3,9 +3,8 @@ I'll provide a detailed breakdown of what your final preprocessed dataframe will
 ## **Final Dataframe Structure**
 
 ### **High-Level Overview**
-- **Rows:** ~25,000-28,000 games (1996-2023 regular season, after filtering early season games with insufficient history)
+- **Rows:** ~16,000-17,000 games (2003-2024 regular season, post 09-01-2003, after excluding first 10 games of each team's season)
 - **Columns:** ~45-50 features (after feature engineering and discretization)
-- **Memory:** ~10-15 MB (mostly categorical data after discretization)
 
 ---
 
@@ -139,7 +138,8 @@ away_fastbreak_pts_pg      float64
 ### **9. Game Context (3 columns)**
 ```python
 home_court_advantage       int64      # 1 for home team, 0 for neutral (always 1)
-season_stage               category   # 'Early' (0-20 games), 'Mid' (21-60), 'Late' (61+)
+season_stage               category   # 'Early' (games 11-30), 'Mid' (31-60), 'Late' (61+)
+                                      # Note: First 10 games excluded from dataset
 is_weekend                 bool       # Saturday or Sunday game
 ```
 
@@ -165,7 +165,7 @@ matchup_advantage          category   # 'Home_Favored', 'Even', 'Away_Favored'
 
 ### **Continuous Features (for Gaussian BN or input)**
 ```python
-Final DataFrame Shape: (27500, 48)
+Final DataFrame Shape: (19500, 48)
 
 Continuous columns (30):
 ├── Identifiers (3): game_id, home_team_id, away_team_id
@@ -230,17 +230,18 @@ Categorical columns (14):
 
 ```python
 # Step-by-step transformation
-1. Load game.csv                        → (65000, 50) raw games
-2. Filter to 1996-2023                  → (55000, 50)
-3. Compute rolling statistics           → (55000, 70) added 20 rolling features
-4. Join game_info.csv                   → (55000, 72) added date, attendance
-5. Calculate rest days                  → (55000, 76) added rest features
-6. Join inactive_players.csv            → (55000, 80) added roster health
-7. Join other_stats.csv                 → (55000, 84) added advanced stats
-8. Filter: require 5+ games history     → (28000, 84) removed early season
-9. Create derived features              → (28000, 89) added differentials
-10. Discretize for Bayesian Network     → (28000, 103) added categorical features
-11. Select final feature set            → (28000, 48) keep relevant columns
+1. Load game.csv                           → (65000, 50) raw games
+2. Filter to post 09-01-2003 (2003-2024)   → (40000, 50) modern era only
+3. Filter: regular season games only       → (35000, 50) exclude playoffs
+4. Join game_info.csv                      → (35000, 52) added date, attendance
+5. Compute rolling statistics              → (35000, 72) added 20 rolling features
+6. Calculate rest days                     → (35000, 76) added rest features
+7. Join inactive_players.csv               → (35000, 80) added roster health
+8. Join other_stats.csv                    → (35000, 84) added advanced stats
+9. Filter: exclude first 10 games/team     → (20000, 84) removed early season
+10. Create derived features                → (20000, 89) added differentials
+11. Discretize for Bayesian Network        → (20000, 103) added categorical features
+12. Select final feature set               → (20000, 48) keep relevant columns
 ```
 
 ---
@@ -249,19 +250,19 @@ Categorical columns (14):
 
 ```python
 Dataset Summary:
-├── Total rows: ~27,500 games
-├── Training set (1996-2018): ~21,000 games (76%)
-├── Validation set (2019-2021): ~4,000 games (15%)
-└── Test set (2022-2023): ~2,500 games (9%)
+├── Total rows: ~19,500 games (post 09-01-2003, regular season only)
+├── Training set (2003-2018): ~13,500 games (69%)
+├── Validation set (2019-2021): ~3,500 games (18%)
+└── Test set (2022-2024): ~2,500 games (13%)
 
 Memory Usage:
-├── Continuous features: ~6 MB (30 float64 columns)
-├── Categorical features: ~2 MB (14 category columns)
-├── Integer/bool features: ~1 MB (11 columns)
-└── Total: ~9-10 MB (compressed)
+├── Continuous features: ~5 MB (30 float64 columns)
+├── Categorical features: ~1.5 MB (14 category columns)
+├── Integer/bool features: ~0.8 MB (11 columns)
+└── Total: ~7-8 MB (compressed)
 
 Missing Data:
-├── Early season stats: Handled via prior season imputation
+├── Early season stats: Eliminated by excluding first 10 games of each team's season
 ├── Inactive players: <5% missing → default to 0 (full roster)
 ├── Advanced stats: <2% missing → forward fill or season average
 └── After preprocessing: 0% missing (all imputed)

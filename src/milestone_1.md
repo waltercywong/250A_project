@@ -31,8 +31,8 @@ Predicting NBA game outcomes is a complex problem involving multiple interacting
 - `common_player_info.csv` & `player.csv`: Player information for roster analysis
 
 **Data Characteristics:**
-- Time range: 1996-2023 (modern NBA era with consistent statistics)
-- ~30,000 regular season games with complete feature data
+- Time range: 2003-2024 seasons (modern NBA era with consistent defensive statistics and pace-adjusted metrics)
+- ~20,000 regular season games after filtering early season games (first 10 games of each team's season excluded to ensure sufficient rolling statistics)
 - Balanced outcome variable (home team wins ~58% historically)
 - Minimal missing data in core statistics; strategic imputation for advanced metrics
 
@@ -41,7 +41,8 @@ Predicting NBA game outcomes is a complex problem involving multiple interacting
 ### **Methodology**
 
 **1. Data Preprocessing & Feature Engineering**
-- **Temporal split:** Train (1996-2018), Validation (2019-2021), Test (2022-2023) to avoid data leakage
+- **Temporal filtering:** Only games after 09-01-2003 (2003-04 season onwards); exclude first 10 games of each team's season to ensure sufficient rolling statistics
+- **Temporal split:** Train (2003-2018), Validation (2019-2021), Test (2022-2024) to avoid data leakage
 - **Calculate team statistics from `game.csv`:** Compute rolling/cumulative metrics (win%, PPG, FG%, rebounds, assists) from historical game results for each team before each game
 - **Contextual features:** Days of rest (calculated from `game_info.csv` dates), back-to-back indicator, home/away status, number of inactive players
 - **Recent form:** Last 5-game and 10-game win percentages, scoring trends

@@ -240,9 +240,9 @@ scoring_trend_diff = home_scoring_trend - away_scoring_trend
 **Create train/validation/test split by time:**
 ```python
 # Option 1: By season
-train: seasons 1996-2015
-validation: seasons 2016-2018
-test: seasons 2019-2023
+train: seasons 2003-2018
+validation: seasons 2019-2021
+test: seasons 2022-2024
 
 # Option 2: Rolling window
 for each season:
@@ -275,10 +275,9 @@ labels = ['B2B', '1_day', '2_days', '3+_days']
 **Strategies:**
 ```python
 # Team stats early in season (insufficient game history)
-- Require minimum 5 games before including in training
-- Use previous season's final stats as prior
-- Use league average for first few games
-- Implement expanding window (use all available data)
+- Exclude first 10 games of each team's season from training/testing
+- This ensures each game has at least 10 prior games for rolling statistics
+- Balances data quality vs. sample size
 
 # Missing inactive player data
 - Assume full roster if missing
