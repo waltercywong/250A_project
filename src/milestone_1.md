@@ -5,7 +5,7 @@
 
 ### **Problem Description**
 
-Predicting NBA game outcomes is a complex problem involving multiple interacting factors including team strength, player availability, contextual game situations, and momentum. Traditional machine learning models treat these factors independently, but basketball outcomes are inherently causal—team performance depends on roster health, which depends on schedule density, which affects game outcomes. 
+Predicting NBA game outcomes is a complex problem involving multiple interacting factors including team strength, player availability, contextual game situations, and momentum. Traditional machine learning models treat these factors independently, but basketball outcomes are inherently causal—team performance depends on roster health, which depends on schedule density, which affects game outcomes. This problem is important because basketball analytics often needs to reason about uncertainty in future performance as opposed to only using point estimates.
 
 **Research Question:** Can we build an interpretable Bayesian Network that models the causal relationships between team performance metrics, contextual factors (home advantage, rest days, roster health), and game outcomes while providing probabilistic predictions and insights into key winning factors?
 
@@ -48,6 +48,8 @@ Predicting NBA game outcomes is a complex problem involving multiple interacting
 - **Recent form:** Last 5-game and 10-game win percentages, scoring trends
 - **Advanced metrics from `other_stats.csv`:** Points in paint, fast break points, second chance points
 - **Discretization:** Bin continuous variables into categories (e.g., team strength: Weak/Average/Strong; rest: 0-days/1-day/2-days/3+)
+
+These preprocessing steps ensure the data is temporally valid, avoids leakage, and provides features that probabilistic models can actually use. Rolling and contextual statistics capture recent performance patterns that influence the next game, while discretization keeps the state space manageable for our discrete model.
 
 **2. Bayesian Network Structure Design**
 - **Variables:**
